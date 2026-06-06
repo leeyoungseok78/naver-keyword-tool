@@ -141,6 +141,31 @@
         }
         .stat-label { color: #6c757d; font-weight: 600; font-size: 13px; }
 
+        /* 검색어 요약 (키워드 1개 = 한 줄) */
+        .kw-summary { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .kw-summary-row { display: flex; align-items: stretch; gap: 8px; }
+        .kw-name {
+            flex: 0 0 150px;
+            background: linear-gradient(135deg, #4a90d9 0%, #2c5aa0 100%);
+            color: #fff; border-radius: 8px; padding: 6px 12px;
+            display: flex; flex-direction: column; justify-content: center;
+            font-weight: 700; font-size: 13px; word-break: break-all;
+        }
+        .kw-name small { font-weight: 400; font-size: 10px; opacity: 0.85; }
+        .kw-metric {
+            flex: 1 1 0; min-width: 0;
+            background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;
+            padding: 5px 10px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .kw-metric.total { background: #eef4fb; border-color: #cfe0f3; }
+        .kw-metric .m-label { font-size: 11px; color: #6c757d; font-weight: 600; }
+        .kw-metric .m-val { font-size: 1.05em; font-weight: 700; color: #2c5aa0; }
+        @media (max-width: 600px) {
+            .kw-name { flex-basis: 100px; font-size: 12px; }
+            .kw-metric { padding: 4px 6px; }
+            .kw-metric .m-label { font-size: 10px; }
+        }
+
         .results-table-wrap {
             background: white; border-radius: 12px; overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
@@ -510,7 +535,7 @@
                     </div>
                 </div>
 
-                <div class="stats-grid" id="statsGrid"></div>
+                <div class="kw-summary" id="statsGrid"></div>
 
                 <div class="results-table-wrap">
                     <table class="table" id="resultsTable">
@@ -862,10 +887,12 @@
                 const mobile = row ? row.mobile : null;
                 const tot = row ? totalQty(row) : null;
                 return `
-                    <div class="stat-card"><div class="stat-number" style="font-size:1.2em; word-break:break-all;">${escapeHtml(kw)}</div><div class="stat-label">검색 키워드</div></div>
-                    <div class="stat-card"><div class="stat-number">${fmtQty(pc)}</div><div class="stat-label">월 PC</div></div>
-                    <div class="stat-card"><div class="stat-number">${fmtQty(mobile)}</div><div class="stat-label">월 모바일</div></div>
-                    <div class="stat-card"><div class="stat-number">${fmtQty(tot)}</div><div class="stat-label">PC+모바일</div></div>
+                    <div class="kw-summary-row">
+                        <div class="kw-name">${escapeHtml(kw)}<small>검색 키워드</small></div>
+                        <div class="kw-metric"><span class="m-label">월 PC</span><span class="m-val">${fmtQty(pc)}</span></div>
+                        <div class="kw-metric"><span class="m-label">월 모바일</span><span class="m-val">${fmtQty(mobile)}</span></div>
+                        <div class="kw-metric total"><span class="m-label">PC+모바일</span><span class="m-val">${fmtQty(tot)}</span></div>
+                    </div>
                 `;
             }).join('');
 
