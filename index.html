@@ -473,11 +473,13 @@
             <!-- ===== 🔎 키워드 입력 ===== -->
             <h3 style="margin: 25px 0 10px 0; color: #2c5aa0; font-size: 1.1em;">🔎 키워드 조회</h3>
             <div class="input-section">
-                <input type="text" class="keyword-input" id="keywordInput"
-                       placeholder="조회할 키워드 입력 (콤마로 최대 5개, 예: 인천강아지분양, 강아지분양)"
-                       onkeydown="if(event.key==='Enter') startSearch()">
+                <textarea class="keyword-input" id="keywordInput" rows="4"
+                       style="resize: vertical; line-height: 1.5; font-family: inherit;"
+                       placeholder="조회할 키워드 입력 (한 줄에 하나씩, 최대 5개)&#10;예:&#10;인천철거&#10;강아지분양"
+                       onkeydown="if(event.key==='Enter' && (event.ctrlKey||event.metaKey)){ event.preventDefault(); startSearch(); }"></textarea>
                 <div class="help-card blue" style="margin-top:10px;">
-                    💡 콤마(,)로 구분해 <b>최대 5개</b>까지 한 번에 조회할 수 있어요. (네이버 검색광고 API 최대치)
+                    💡 <b>엔터(줄바꿈)로 한 줄에 하나씩</b> 입력하세요. 콤마(,)로 구분해도 됩니다. <b>최대 5개</b>까지 한 번에 조회 (네이버 API 최대치).<br>
+                    ⌨️ 조회는 아래 <b>「조회 시작」 버튼</b> 또는 <b>Ctrl+Enter</b>.
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 12px;">
@@ -545,6 +547,7 @@
         let currentResults = [];
         let currentSort = { col: 'total', dir: 'desc' };
         let lastQueryKeyword = '';
+        let lastQueryKeywords = [];
 
         // ===== 로컬 스토리지 키 =====
         const LS_KEYS = {
@@ -735,8 +738,8 @@
                 return;
             }
 
-            // 콤마/줄바꿈으로 분리 → 최대 5개
-            let keywords = rawInput.split(/[,\n]/).map(k => k.trim()).filter(Boolean);
+            // 줄바꿈/콤마로 분리 → 최대 5개
+            let keywords = rawInput.split(/[\r\n,]+/).map(k => k.trim()).filter(Boolean);
             if (keywords.length > 5) {
                 alert('키워드는 최대 5개까지 입력 가능합니다.\n처음 5개만 조회합니다.');
                 keywords = keywords.slice(0, 5);
@@ -749,6 +752,7 @@
             isSearching = true;
             stopRequested = false;
             lastQueryKeyword = keywords.join(', ');
+            lastQueryKeywords = keywords;
             currentResults = [];
 
             document.getElementById('stopBtn').style.display = 'inline-block';
@@ -850,17 +854,23 @@
 
         // ===== 결과 렌더링 =====
         function renderResults() {
-            // 통계
-            const total = currentResults.length;
-            const sumPc = currentResults.reduce((s,r) => s + Math.max(0, r.pc || 0), 0);
-            const sumMobile = currentResults.reduce((s,r) => s + Math.max(0, r.mobile || 0), 0);
+            // 요약 카드 = 검색한 키워드 "자체"의 수치만 표시 (연관키워드 합계 아님)
+            const norm = s => String(s).replace(/\s+/g, '').toLowerCase();
+            const statsHtml = lastQueryKeywords.map(kw => {
+                const row = currentResults.find(r => norm(r.keyword) === norm(kw));
+                const pc = row ? row.pc : null;
+                const mobile = row ? row.mobile : null;
+                const tot = row ? totalQty(row) : null;
+                return `
+                    <div class="stat-card"><div class="stat-number" style="font-size:1.2em; word-break:break-all;">${escapeHtml(kw)}</div><div class="stat-label">검색 키워드</div></div>
+                    <div class="stat-card"><div class="stat-number">${fmtQty(pc)}</div><div class="stat-label">월 PC</div></div>
+                    <div class="stat-card"><div class="stat-number">${fmtQty(mobile)}</div><div class="stat-label">월 모바일</div></div>
+                    <div class="stat-card"><div class="stat-number">${fmtQty(tot)}</div><div class="stat-label">PC+모바일</div></div>
+                `;
+            }).join('');
 
             document.getElementById('resultsTitle').textContent = `📊 "${lastQueryKeyword}" 조회 결과`;
-            document.getElementById('statsGrid').innerHTML = `
-                <div class="stat-card"><div class="stat-number">${total.toLocaleString()}</div><div class="stat-label">총 키워드</div></div>
-                <div class="stat-card"><div class="stat-number">${sumPc.toLocaleString()}</div><div class="stat-label">월 PC 검색량 합계</div></div>
-                <div class="stat-card"><div class="stat-number">${sumMobile.toLocaleString()}</div><div class="stat-label">월 모바일 검색량 합계</div></div>
-            `;
+            document.getElementById('statsGrid').innerHTML = statsHtml;
 
             sortResults();
 
