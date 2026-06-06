@@ -166,6 +166,39 @@
             .kw-metric .m-label { font-size: 10px; }
         }
 
+        /* 누적/기록 */
+        .opt-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+        .history-box { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .hist-chip {
+            background: #eef4fb; border: 1px solid #cfe0f3; color: #2c5aa0;
+            border-radius: 14px; padding: 4px 12px; font-size: 12px; cursor: pointer;
+            max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .hist-chip:hover { background: #d9e8f8; }
+        .hist-clear { background: none; border: none; color: #999; font-size: 12px; cursor: pointer; text-decoration: underline; }
+
+        /* 필터 패널 */
+        .filter-panel {
+            background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 10px;
+            padding: 12px 14px; margin-bottom: 14px;
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+        }
+        .filter-panel input[type="text"], .filter-panel input[type="number"], .filter-panel select {
+            padding: 8px 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 13px;
+        }
+        .filter-panel input:focus, .filter-panel select:focus { border-color: #4a90d9; outline: none; }
+        .filter-chk { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; user-select: none; }
+        .filter-count { font-size: 13px; color: #6c757d; font-weight: 600; white-space: nowrap; margin-left: auto; }
+
+        /* 황금 키워드 */
+        tr.golden-row { background: #fffbe6 !important; }
+        tr.golden-row:hover { background: #fff6cc !important; }
+        .golden-mark { color: #f5a623; margin-right: 4px; }
+
+        /* 행 선택 체크박스 */
+        .table th.col-chk, .table td.col-chk { width: 34px; text-align: center; cursor: default; }
+        .table input.row-check, #selectAll { width: 16px; height: 16px; cursor: pointer; }
+
         .results-table-wrap {
             background: white; border-radius: 12px; overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
@@ -507,6 +540,13 @@
                     ⌨️ 조회는 아래 <b>「조회 시작」 버튼</b> 또는 <b>Ctrl+Enter</b>.
                 </div>
 
+                <div class="opt-row">
+                    <label class="filter-chk">
+                        <input type="checkbox" id="accumulate"> ➕ 기존 결과에 누적 <small style="color:#888;">(이전 조회 결과를 지우지 않고 합치기, 중복 자동 제거)</small>
+                    </label>
+                </div>
+                <div class="history-box" id="historyBox"></div>
+
                 <div style="display: flex; gap: 10px; margin-top: 12px;">
                     <button class="btn btn-primary" style="flex: 1; padding: 14px;" onclick="startSearch()">
                         🚀 조회 시작
@@ -529,18 +569,44 @@
             <div class="results-section" id="resultsSection">
                 <div class="results-header">
                     <div class="results-title" id="resultsTitle">📊 조회 결과</div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-success" onclick="downloadExcel()">📥 엑셀 다운로드</button>
-                        <button class="btn btn-secondary btn-sm" onclick="copyAllKeywords()">📋 키워드만 복사</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <button class="btn btn-success btn-sm" onclick="downloadExcel('filtered')">📥 엑셀(보이는 것)</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyKeywords('filtered')">📋 복사(보이는 것)</button>
+                        <button class="btn btn-warning btn-sm" onclick="downloadExcel('selected')">📥 선택 엑셀</button>
+                        <button class="btn btn-warning btn-sm" onclick="copyKeywords('selected')">📋 선택 복사</button>
+                        <span id="selCount" style="font-size:12px; color:#6c757d; font-weight:600;">선택 0</span>
                     </div>
                 </div>
 
                 <div class="kw-summary" id="statsGrid"></div>
 
+                <div class="filter-panel">
+                    <input type="text" id="filterInput" oninput="renderTable()" placeholder="🔍 포함 단어" style="flex:1; min-width:140px;">
+                    <input type="text" id="excludeInput" oninput="renderTable()" placeholder="🚫 제외 단어 (공백/콤마)" style="flex:1; min-width:140px;">
+                    <input type="number" id="minVolInput" oninput="renderTable()" placeholder="📊 월 합계 ≥" min="0" style="width:120px;">
+                    <select id="compFilter" onchange="renderTable()">
+                        <option value="">경쟁 전체</option>
+                        <option value="낮음">낮음만</option>
+                        <option value="낮음중간">낮음+중간</option>
+                    </select>
+                    <label class="filter-chk">
+                        <input type="checkbox" id="goldenOnly" onchange="renderTable()"> 🏆 황금만
+                    </label>
+                    <label class="filter-chk" title="황금 키워드 기준 검색량">
+                        ≥ <input type="number" id="goldenMin" value="100" min="0" oninput="renderTable()" style="width:70px;">
+                    </label>
+                    <button class="btn btn-secondary btn-sm" onclick="clearFilter()">✕ 초기화</button>
+                    <span class="filter-count" id="filterCount"></span>
+                </div>
+                <div class="help-card" style="margin-bottom:12px; padding:8px 12px; font-size:12px;">
+                    🏆 <b>황금 키워드</b> = 경쟁 <b>'낮음'</b> + 월 합계 검색량이 위 기준(<span id="goldenMinLabel">100</span>) 이상 → 노란색으로 강조됩니다.
+                </div>
+
                 <div class="results-table-wrap">
                     <table class="table" id="resultsTable">
                         <thead>
                             <tr>
+                                <th class="col-chk"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" title="보이는 것 전체 선택"></th>
                                 <th onclick="sortBy('rank')">#</th>
                                 <th onclick="sortBy('keyword')">키워드</th>
                                 <th onclick="sortBy('pc')">월 PC ▼</th>
@@ -573,6 +639,11 @@
         let currentSort = { col: 'total', dir: 'desc' };
         let lastQueryKeyword = '';
         let lastQueryKeywords = [];
+        let selectedKeywords = new Set();   // 행 선택 (키워드 문자열 기준)
+        const HISTORY_KEY = 'naver_kw_history';
+
+        // 공백 제거 + 소문자 정규화 (키워드 비교/중복 제거용)
+        function norm(s) { return String(s).replace(/\s+/g, '').toLowerCase(); }
 
         // ===== 로컬 스토리지 키 =====
         const LS_KEYS = {
@@ -588,6 +659,7 @@
             document.getElementById('apiKey').value = localStorage.getItem(LS_KEYS.apiKey) || '';
             document.getElementById('secretKey').value = localStorage.getItem(LS_KEYS.secretKey) || '';
             document.getElementById('workerUrl').value = localStorage.getItem(LS_KEYS.workerUrl) || '';
+            renderHistory();
         });
 
         // ===== 접기/펼치기 =====
@@ -774,11 +846,24 @@
             try { cfg = getConfig(); }
             catch (e) { alert(e.message); return; }
 
+            const accumulate = document.getElementById('accumulate').checked && currentResults.length > 0;
+
             isSearching = true;
             stopRequested = false;
-            lastQueryKeyword = keywords.join(', ');
-            lastQueryKeywords = keywords;
-            currentResults = [];
+
+            if (accumulate) {
+                // 기존 검색어 목록에 새 키워드 추가 (중복 제거)
+                keywords.forEach(k => {
+                    if (!lastQueryKeywords.some(x => norm(x) === norm(k))) lastQueryKeywords.push(k);
+                });
+                lastQueryKeyword = lastQueryKeywords.join(', ');
+            } else {
+                lastQueryKeyword = keywords.join(', ');
+                lastQueryKeywords = keywords.slice();
+                currentResults = [];
+                selectedKeywords.clear();
+                resetFilterInputs();
+            }
 
             document.getElementById('stopBtn').style.display = 'inline-block';
             document.getElementById('progressSection').style.display = 'block';
@@ -798,12 +883,15 @@
 
                 if (stopRequested) throw new Error('사용자 중단');
 
-                const resultMap = new Map(); // keyword -> data
+                // norm(키워드) 기준으로 중복 제거 — 누적 시 기존 결과를 시드로 둠
+                const resultMap = new Map();
+                currentResults.forEach(r => resultMap.set(norm(r.keyword), r));
+
                 const relList = relResult.keywordList || [];
                 log(`✅ 연관키워드 ${relList.length}개 받음`, 'success');
 
                 relList.forEach(item => {
-                    resultMap.set(item.relKeyword, {
+                    resultMap.set(norm(item.relKeyword), {
                         keyword: item.relKeyword,
                         pc: parseQty(item.monthlyPcQcCnt),
                         mobile: parseQty(item.monthlyMobileQcCnt),
@@ -814,8 +902,9 @@
 
                 updateProgress(100, '✅ 완료!');
                 currentResults = Array.from(resultMap.values());
-                log(`🎉 총 ${currentResults.length}개 키워드 수집 완료`, 'success');
+                log(`🎉 총 ${currentResults.length}개 키워드${accumulate ? ' (누적)' : ''} 수집 완료`, 'success');
 
+                saveHistory(keywords.join(', '));
                 renderResults();
             } catch (e) {
                 if (e.message === '사용자 중단') {
@@ -880,7 +969,6 @@
         // ===== 결과 렌더링 =====
         function renderResults() {
             // 요약 카드 = 검색한 키워드 "자체"의 수치만 표시 (연관키워드 합계 아님)
-            const norm = s => String(s).replace(/\s+/g, '').toLowerCase();
             const statsHtml = lastQueryKeywords.map(kw => {
                 const row = currentResults.find(r => norm(r.keyword) === norm(kw));
                 const pc = row ? row.pc : null;
@@ -899,22 +987,161 @@
             document.getElementById('resultsTitle').textContent = `📊 "${lastQueryKeyword}" 조회 결과`;
             document.getElementById('statsGrid').innerHTML = statsHtml;
 
-            sortResults();
-
-            const tbody = document.getElementById('resultsBody');
-            tbody.innerHTML = currentResults.map((r, i) => `
-                <tr>
-                    <td>${i+1}</td>
-                    <td><b>${escapeHtml(r.keyword)}</b></td>
-                    <td class="num">${fmtQty(r.pc)}</td>
-                    <td class="num">${fmtQty(r.mobile)}</td>
-                    <td class="num"><b>${fmtQty(totalQty(r))}</b></td>
-                    <td>${compBadge(r.comp)}</td>
-                    <td class="num">${r.avgDepth !== null ? r.avgDepth : '-'}</td>
-                </tr>
-            `).join('');
+            renderTable();
 
             document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        // ===== 필터 =====
+        // 숫자 비교용 합계 (null/-1(10미만)은 0으로 취급)
+        function totalNum(r) {
+            const t = totalQty(r);
+            return (t === null || t === -1) ? 0 : t;
+        }
+
+        function readFilters() {
+            const goldenMin = parseInt(document.getElementById('goldenMin').value, 10);
+            return {
+                include: document.getElementById('filterInput').value.trim().toLowerCase(),
+                exclude: document.getElementById('excludeInput').value.split(/[\s,]+/).map(s => s.trim().toLowerCase()).filter(Boolean),
+                minVol: parseInt(document.getElementById('minVolInput').value, 10) || 0,
+                comp: document.getElementById('compFilter').value,
+                goldenOnly: document.getElementById('goldenOnly').checked,
+                goldenMin: isNaN(goldenMin) ? 100 : goldenMin,
+            };
+        }
+
+        function isGolden(r, goldenMin) {
+            return r.comp === '낮음' && totalNum(r) >= goldenMin;
+        }
+
+        function isFilterActive(f) {
+            return !!(f.include || f.exclude.length || f.minVol || f.comp || f.goldenOnly);
+        }
+
+        function getFilteredResults() {
+            const f = readFilters();
+            return currentResults.filter(r => {
+                const kw = r.keyword.toLowerCase();
+                if (f.include && !kw.includes(f.include)) return false;
+                if (f.exclude.some(ex => kw.includes(ex))) return false;
+                if (f.minVol && totalNum(r) < f.minVol) return false;
+                if (f.comp === '낮음' && r.comp !== '낮음') return false;
+                if (f.comp === '낮음중간' && !(r.comp === '낮음' || r.comp === '중간')) return false;
+                if (f.goldenOnly && !isGolden(r, f.goldenMin)) return false;
+                return true;
+            });
+        }
+
+        function resetFilterInputs() {
+            ['filterInput', 'excludeInput', 'minVolInput'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('compFilter').value = '';
+            document.getElementById('goldenOnly').checked = false;
+        }
+
+        function clearFilter() {
+            resetFilterInputs();
+            renderTable();
+        }
+
+        // ===== 표 렌더링 (정렬 + 필터 + 황금 + 선택 반영) =====
+        function renderTable() {
+            document.getElementById('goldenMinLabel').textContent = readFilters().goldenMin;
+            sortResults();
+            const f = readFilters();
+            const list = getFilteredResults();
+            const tbody = document.getElementById('resultsBody');
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:#999;">조건에 맞는 키워드가 없습니다.</td></tr>`;
+            } else {
+                tbody.innerHTML = list.map((r, i) => {
+                    const golden = isGolden(r, f.goldenMin);
+                    const checked = selectedKeywords.has(r.keyword) ? 'checked' : '';
+                    return `
+                    <tr class="${golden ? 'golden-row' : ''}">
+                        <td class="col-chk"><input type="checkbox" class="row-check" data-kw="${escapeHtml(r.keyword)}" ${checked} onchange="toggleSelect(this)"></td>
+                        <td>${i+1}</td>
+                        <td>${golden ? '<span class="golden-mark">🏆</span>' : ''}<b>${escapeHtml(r.keyword)}</b></td>
+                        <td class="num">${fmtQty(r.pc)}</td>
+                        <td class="num">${fmtQty(r.mobile)}</td>
+                        <td class="num"><b>${fmtQty(totalQty(r))}</b></td>
+                        <td>${compBadge(r.comp)}</td>
+                        <td class="num">${r.avgDepth !== null ? r.avgDepth : '-'}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // 카운트 표시
+            const total = currentResults.length;
+            const shown = list.length;
+            const goldenCnt = currentResults.filter(r => isGolden(r, f.goldenMin)).length;
+            document.getElementById('filterCount').textContent = isFilterActive(f)
+                ? `${shown.toLocaleString()} / ${total.toLocaleString()}개 표시 · 🏆${goldenCnt}`
+                : `총 ${total.toLocaleString()}개 · 🏆${goldenCnt}`;
+
+            // 전체선택 체크박스 상태
+            const selAll = document.getElementById('selectAll');
+            selAll.checked = list.length > 0 && list.every(r => selectedKeywords.has(r.keyword));
+            updateSelCount();
+        }
+
+        // ===== 행 선택 =====
+        function toggleSelect(cb) {
+            const keyword = cb.dataset.kw;
+            if (cb.checked) selectedKeywords.add(keyword);
+            else selectedKeywords.delete(keyword);
+            const list = getFilteredResults();
+            document.getElementById('selectAll').checked = list.length > 0 && list.every(r => selectedKeywords.has(r.keyword));
+            updateSelCount();
+        }
+
+        function toggleSelectAll(cb) {
+            const list = getFilteredResults();
+            list.forEach(r => { if (cb.checked) selectedKeywords.add(r.keyword); else selectedKeywords.delete(r.keyword); });
+            renderTable();
+        }
+
+        function updateSelCount() {
+            document.getElementById('selCount').textContent = `선택 ${selectedKeywords.size}`;
+        }
+
+        function getSelectedResults() {
+            return currentResults.filter(r => selectedKeywords.has(r.keyword));
+        }
+
+        // ===== 조회 기록 =====
+        function saveHistory(kwStr) {
+            if (!kwStr) return;
+            let hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            hist = hist.filter(h => h !== kwStr);
+            hist.unshift(kwStr);
+            hist = hist.slice(0, 10);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const box = document.getElementById('historyBox');
+            const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            if (!hist.length) { box.innerHTML = ''; return; }
+            box.innerHTML = '<span style="font-size:12px;color:#888;">🕘 최근:</span> '
+                + hist.map((h, i) => `<button type="button" class="hist-chip" title="${escapeHtml(h)}" onclick="runHistory(${i})">${escapeHtml(h)}</button>`).join('')
+                + ` <button type="button" class="hist-clear" onclick="clearHistory()">기록 지우기</button>`;
+        }
+
+        function runHistory(i) {
+            const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const kwStr = hist[i];
+            if (!kwStr) return;
+            document.getElementById('keywordInput').value = kwStr.replace(/,\s*/g, '\n');
+            startSearch();
+        }
+
+        function clearHistory() {
+            if (!confirm('조회 기록을 모두 지울까요?')) return;
+            localStorage.removeItem(HISTORY_KEY);
+            renderHistory();
         }
 
         function totalQty(r) {
@@ -937,7 +1164,7 @@
                 currentSort.col = col;
                 currentSort.dir = 'desc';
             }
-            renderResults();
+            renderTable();
         }
 
         function sortResults() {
@@ -960,17 +1187,25 @@
             });
         }
 
+        // scope: 'filtered'(보이는 것) | 'selected'(선택한 것)
+        function getExportRows(scope) {
+            if (scope === 'selected') return getSelectedResults();
+            return getFilteredResults();
+        }
+
         // ===== 엑셀 다운로드 =====
-        function downloadExcel() {
-            if (currentResults.length === 0) {
-                alert('다운로드할 결과가 없습니다.');
+        function downloadExcel(scope) {
+            const rows = getExportRows(scope);
+            if (rows.length === 0) {
+                alert(scope === 'selected' ? '선택된 키워드가 없습니다. (표에서 체크박스를 선택하세요)' : '다운로드할 결과가 없습니다.');
                 return;
             }
             const wb = XLSX.utils.book_new();
             const wsData = [
-                ['순위', '키워드', '월간PC검색량', '월간모바일검색량', '월간합계', '경쟁정도', '월평균노출광고수']
+                ['순위', '키워드', '월간PC검색량', '월간모바일검색량', '월간합계', '경쟁정도', '월평균노출광고수', '황금']
             ];
-            currentResults.forEach((r, i) => {
+            const f = readFilters();
+            rows.forEach((r, i) => {
                 wsData.push([
                     i + 1,
                     r.keyword,
@@ -984,29 +1219,32 @@
                     })(),
                     r.comp,
                     r.avgDepth ?? '',
+                    isGolden(r, f.goldenMin) ? '🏆' : '',
                 ]);
             });
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             ws['!cols'] = [
                 { wch: 6 }, { wch: 30 }, { wch: 14 }, { wch: 16 },
-                { wch: 12 }, { wch: 10 }, { wch: 14 }
+                { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 6 }
             ];
             XLSX.utils.book_append_sheet(wb, ws, "키워드조회");
-            const safeKw = lastQueryKeyword.replace(/[\\/:*?"<>|]/g, '_');
+            const safeKw = lastQueryKeyword.replace(/[\\/:*?"<>|]/g, '_').slice(0, 40);
+            const scopeTag = scope === 'selected' ? '_선택' : (isFilterActive(f) ? '_필터' : '');
             const now = new Date();
             const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-            XLSX.writeFile(wb, `네이버키워드_${safeKw}_${ts}.xlsx`);
-            log('📥 엑셀 다운로드 완료', 'success');
+            XLSX.writeFile(wb, `네이버키워드_${safeKw}${scopeTag}_${ts}.xlsx`);
+            log(`📥 엑셀 다운로드 완료 (${rows.length}개${scope === 'selected' ? ', 선택' : (isFilterActive(f) ? ', 필터' : '')})`, 'success');
         }
 
-        function copyAllKeywords() {
-            if (currentResults.length === 0) {
-                alert('복사할 결과가 없습니다.');
+        function copyKeywords(scope) {
+            const rows = getExportRows(scope);
+            if (rows.length === 0) {
+                alert(scope === 'selected' ? '선택된 키워드가 없습니다. (표에서 체크박스를 선택하세요)' : '복사할 결과가 없습니다.');
                 return;
             }
-            const text = currentResults.map(r => r.keyword).join('\n');
+            const text = rows.map(r => r.keyword).join('\n');
             navigator.clipboard.writeText(text).then(() => {
-                alert(`✅ ${currentResults.length}개 키워드를 클립보드에 복사했습니다!`);
+                alert(`✅ ${rows.length}개 키워드를 클립보드에 복사했습니다!${scope === 'selected' ? '\n(선택한 항목)' : ''}`);
             });
         }
     </script>
