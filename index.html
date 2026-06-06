@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>네이버 키워드 조회 + 자동완성</title>
+    <title>네이버 키워드 조회</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -164,9 +164,6 @@
         .badge-high { background: #ffebee; color: #c62828; }
         .badge-mid { background: #fff3e0; color: #ef6c00; }
         .badge-low { background: #e8f5e8; color: #2e7d32; }
-        .badge-src-ac { background: #e3f2fd; color: #1565c0; }
-        .badge-src-rel { background: #f3e5f5; color: #6a1b9a; }
-        .badge-src-both { background: #fff8e1; color: #ef6c00; }
 
         /* 로그 */
         .log-section {
@@ -253,8 +250,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔍 네이버 키워드 조회 + 자동완성</h1>
-            <p>키워드 하나로 연관키워드·월간검색량·자동완성까지 한 번에!</p>
+            <h1>🔍 네이버 키워드 조회</h1>
+            <p>키워드로 연관키워드·월간검색량을 한 번에! (최대 5개)</p>
         </div>
 
         <div class="main-content">
@@ -404,7 +401,7 @@
                     </div>
                     <div class="faq-item">
                         <div class="faq-q" onclick="toggleFaq(this)">B) 키워드 1번 조회에 얼마나 걸리나요?</div>
-                        <div class="faq-a">자동완성 + 연관키워드 + 검색량까지 → 평균 <b>10~30초</b>입니다. 한 번 조회에 키워드 100~1000개 정도가 나옵니다.</div>
+                        <div class="faq-a">연관키워드 + 검색량 조회 → 평균 <b>3~10초</b>입니다. 한 번 조회에 키워드 100~1000개 정도가 나옵니다.</div>
                     </div>
                     <div class="faq-item">
                         <div class="faq-q" onclick="toggleFaq(this)">C) "401 Unauthorized" 또는 "권한 없음" 에러가 나요</div>
@@ -430,23 +427,15 @@
                         <div class="faq-a">네이버 API가 월 검색량 10회 미만은 정확한 숫자를 공개하지 않아 "< 10" 으로 반환합니다. 엑셀에는 "10 미만"으로 저장됩니다.</div>
                     </div>
                     <div class="faq-item">
-                        <div class="faq-q" onclick="toggleFaq(this)">F) 자동완성과 연관키워드의 차이가 뭐예요?</div>
-                        <div class="faq-a">
-                            <b>자동완성</b>: 네이버 검색창에 입력 중 뜨는 추천어. 트렌드 반영이 빠르고 신선한 키워드 많음.<br>
-                            <b>연관키워드 (검색광고 API)</b>: 검색량/클릭 데이터 기반의 통계적 연관성. 광고 데이터 풍부.<br>
-                            👉 두 가지를 합치면 광고 데이터 + 신선한 트렌드 키워드를 모두 얻을 수 있습니다.
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <div class="faq-q" onclick="toggleFaq(this)">G) 내 API 키가 다른 사람에게 노출되나요?</div>
+                        <div class="faq-q" onclick="toggleFaq(this)">F) 내 API 키가 다른 사람에게 노출되나요?</div>
                         <div class="faq-a">아니요. 입력하신 API 키는 본인 브라우저의 localStorage에만 저장됩니다. 서버나 외부로 전송되지 않습니다. Worker는 서명된 요청만 전달할 뿐 키 자체는 거치지 않습니다.</div>
                     </div>
                     <div class="faq-item">
-                        <div class="faq-q" onclick="toggleFaq(this)">H) 결과가 너무 많아요. 일부만 보고 싶어요</div>
+                        <div class="faq-q" onclick="toggleFaq(this)">G) 결과가 너무 많아요. 일부만 보고 싶어요</div>
                         <div class="faq-a">결과 표의 헤더(예: "월 모바일")를 클릭하면 정렬됩니다. 또한 엑셀 다운로드 후 엑셀의 필터 기능으로 검색량 100 이상만 보기 등 자유롭게 필터링하세요.</div>
                     </div>
                     <div class="faq-item">
-                        <div class="faq-q" onclick="toggleFaq(this)">I) 하루에 몇 번까지 조회 가능한가요?</div>
+                        <div class="faq-q" onclick="toggleFaq(this)">H) 하루에 몇 번까지 조회 가능한가요?</div>
                         <div class="faq-a">검색광고 API: 분당 약 60회, 일 제한은 매우 큼 (실사용 부담 없음).<br>Cloudflare Worker 무료: 하루 100,000 요청.<br>일반 사용에서 한도 걸릴 일은 거의 없습니다.</div>
                     </div>
                 </div>
@@ -485,25 +474,13 @@
             <h3 style="margin: 25px 0 10px 0; color: #2c5aa0; font-size: 1.1em;">🔎 키워드 조회</h3>
             <div class="input-section">
                 <input type="text" class="keyword-input" id="keywordInput"
-                       placeholder="조회할 키워드 입력 (예: 인천강아지분양)"
+                       placeholder="조회할 키워드 입력 (콤마로 최대 5개, 예: 인천강아지분양, 강아지분양)"
                        onkeydown="if(event.key==='Enter') startSearch()">
-
-                <div class="options-row">
-                    <label class="option-item">
-                        <input type="checkbox" id="optAutocomplete" checked>
-                        <span>🔮 자동완성으로 키워드 확장</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="optRelated" checked>
-                        <span>🔗 연관키워드 + 검색량 조회</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="optAutoLookup">
-                        <span>📊 자동완성도 검색량 조회 <small style="color:#888;">(느려짐)</small></span>
-                    </label>
+                <div class="help-card blue" style="margin-top:10px;">
+                    💡 콤마(,)로 구분해 <b>최대 5개</b>까지 한 번에 조회할 수 있어요. (네이버 검색광고 API 최대치)
                 </div>
 
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; margin-top: 12px;">
                     <button class="btn btn-primary" style="flex: 1; padding: 14px;" onclick="startSearch()">
                         🚀 조회 시작
                     </button>
@@ -544,7 +521,6 @@
                                 <th onclick="sortBy('total')">월 합계 ▼</th>
                                 <th onclick="sortBy('comp')">경쟁</th>
                                 <th onclick="sortBy('avgDepth')">광고노출</th>
-                                <th onclick="sortBy('source')">출처</th>
                             </tr>
                         </thead>
                         <tbody id="resultsBody"></tbody>
@@ -728,20 +704,6 @@
             return await response.json();
         }
 
-        // ===== 자동완성 API 호출 =====
-        async function callAutocomplete(keyword, cfg) {
-            const targetUrl = `https://ac.search.naver.com/nx/ac?q=${encodeURIComponent(keyword)}&con=0&frm=nv&ans=2&r_format=json&r_enc=UTF-8&r_unicode=0&st=100&r_lt=10000`;
-            const proxyUrl = `${cfg.workerUrl}/?url=${encodeURIComponent(targetUrl)}`;
-
-            const response = await fetch(proxyUrl);
-            if (!response.ok) {
-                throw new Error(`자동완성 호출 실패 (${response.status})`);
-            }
-            const data = await response.json();
-            const items = ((data.items || [])[0]) || [];
-            return items.map(item => item[0]).filter(Boolean);
-        }
-
         // ===== 연결 테스트 =====
         async function testConnection() {
             log('🔌 연결 테스트 시작...', 'info');
@@ -767,10 +729,17 @@
         async function startSearch() {
             if (isSearching) return;
 
-            const keyword = document.getElementById('keywordInput').value.trim();
-            if (!keyword) {
+            const rawInput = document.getElementById('keywordInput').value.trim();
+            if (!rawInput) {
                 alert('조회할 키워드를 입력해주세요!');
                 return;
+            }
+
+            // 콤마/줄바꿈으로 분리 → 최대 5개
+            let keywords = rawInput.split(/[,\n]/).map(k => k.trim()).filter(Boolean);
+            if (keywords.length > 5) {
+                alert('키워드는 최대 5개까지 입력 가능합니다.\n처음 5개만 조회합니다.');
+                keywords = keywords.slice(0, 5);
             }
 
             let cfg;
@@ -779,7 +748,7 @@
 
             isSearching = true;
             stopRequested = false;
-            lastQueryKeyword = keyword;
+            lastQueryKeyword = keywords.join(', ');
             currentResults = [];
 
             document.getElementById('stopBtn').style.display = 'inline-block';
@@ -788,104 +757,31 @@
             document.getElementById('logSection').style.display = 'block';
             document.getElementById('logSection').innerHTML = '';
 
-            log(`🚀 "${keyword}" 조회 시작`, 'info');
+            log(`🚀 "${keywords.join(', ')}" 조회 시작 (${keywords.length}개 키워드)`, 'info');
 
             try {
-                const useAutocomplete = document.getElementById('optAutocomplete').checked;
-                const useRelated = document.getElementById('optRelated').checked;
-                const autoLookup = document.getElementById('optAutoLookup').checked;
-
-                // 1단계: 자동완성 수집
-                let autocompleteKeywords = [];
-                if (useAutocomplete) {
-                    updateProgress(10, '🔮 자동완성 추출 중...');
-                    autocompleteKeywords = await callAutocomplete(keyword, cfg);
-                    log(`✅ 자동완성 ${autocompleteKeywords.length}개 수집`, 'success');
-                }
+                // 연관키워드 + 검색량 조회 (네이버 keywordstool, 최대 5개 동시)
+                updateProgress(30, '🔗 연관키워드 + 검색량 조회 중...');
+                const relResult = await callSearchAdApi('/keywordstool', {
+                    hintKeywords: keywords.join(','),
+                    showDetail: '1'
+                }, cfg);
 
                 if (stopRequested) throw new Error('사용자 중단');
 
-                // 2단계: 검색량 + 연관키워드 조회
                 const resultMap = new Map(); // keyword -> data
+                const relList = relResult.keywordList || [];
+                log(`✅ 연관키워드 ${relList.length}개 받음`, 'success');
 
-                if (useRelated) {
-                    updateProgress(30, '🔗 연관키워드 + 검색량 조회 중...');
-                    const relResult = await callSearchAdApi('/keywordstool', {
-                        hintKeywords: keyword,
-                        showDetail: '1'
-                    }, cfg);
-
-                    const relList = relResult.keywordList || [];
-                    log(`✅ 연관키워드 ${relList.length}개 받음`, 'success');
-
-                    relList.forEach(item => {
-                        resultMap.set(item.relKeyword, {
-                            keyword: item.relKeyword,
-                            pc: parseQty(item.monthlyPcQcCnt),
-                            mobile: parseQty(item.monthlyMobileQcCnt),
-                            avgDepth: item.plAvgDepth || 0,
-                            comp: item.compIdx || '-',
-                            source: 'related',
-                        });
+                relList.forEach(item => {
+                    resultMap.set(item.relKeyword, {
+                        keyword: item.relKeyword,
+                        pc: parseQty(item.monthlyPcQcCnt),
+                        mobile: parseQty(item.monthlyMobileQcCnt),
+                        avgDepth: item.plAvgDepth || 0,
+                        comp: item.compIdx || '-',
                     });
-                }
-
-                if (stopRequested) throw new Error('사용자 중단');
-
-                // 3단계: 자동완성 키워드 합치기
-                autocompleteKeywords.forEach(kw => {
-                    if (resultMap.has(kw)) {
-                        resultMap.get(kw).source = 'both';
-                    } else {
-                        resultMap.set(kw, {
-                            keyword: kw,
-                            pc: null,
-                            mobile: null,
-                            avgDepth: null,
-                            comp: '-',
-                            source: 'autocomplete',
-                        });
-                    }
                 });
-
-                // 4단계: 자동완성 키워드도 검색량 조회 (옵션)
-                if (autoLookup && useRelated) {
-                    const noVolume = Array.from(resultMap.values()).filter(r => r.pc === null);
-                    if (noVolume.length > 0) {
-                        updateProgress(60, `📊 자동완성 ${noVolume.length}개 검색량 조회 중...`);
-                        log(`📊 자동완성 키워드 ${noVolume.length}개 검색량 조회 시작`, 'info');
-
-                        const batchSize = 5;
-                        for (let i = 0; i < noVolume.length; i += batchSize) {
-                            if (stopRequested) throw new Error('사용자 중단');
-
-                            const batch = noVolume.slice(i, i + batchSize).map(r => r.keyword);
-                            try {
-                                const result = await callSearchAdApi('/keywordstool', {
-                                    hintKeywords: batch.join(','),
-                                    showDetail: '1'
-                                }, cfg);
-
-                                (result.keywordList || []).forEach(item => {
-                                    if (resultMap.has(item.relKeyword)) {
-                                        const existing = resultMap.get(item.relKeyword);
-                                        existing.pc = parseQty(item.monthlyPcQcCnt);
-                                        existing.mobile = parseQty(item.monthlyMobileQcCnt);
-                                        existing.avgDepth = item.plAvgDepth || 0;
-                                        existing.comp = item.compIdx || '-';
-                                    }
-                                });
-                            } catch (e) {
-                                log(`⚠️ 배치 ${Math.floor(i/batchSize)+1} 실패: ${e.message}`, 'warn');
-                            }
-
-                            const pct = 60 + Math.floor((i / noVolume.length) * 30);
-                            updateProgress(pct, `📊 ${Math.min(i+batchSize, noVolume.length)}/${noVolume.length} 처리 중...`);
-
-                            await sleep(350); // rate limit
-                        }
-                    }
-                }
 
                 updateProgress(100, '✅ 완료!');
                 currentResults = Array.from(resultMap.values());
@@ -937,20 +833,9 @@
             return '<span style="color:#999">-</span>';
         }
 
-        function sourceBadge(src) {
-            if (src === 'autocomplete') return '<span class="badge badge-src-ac">자동완성</span>';
-            if (src === 'related') return '<span class="badge badge-src-rel">연관</span>';
-            if (src === 'both') return '<span class="badge badge-src-both">둘다</span>';
-            return src;
-        }
-
         function updateProgress(pct, text) {
             document.getElementById('progressFill').style.width = pct + '%';
             document.getElementById('progressText').textContent = text;
-        }
-
-        function sleep(ms) {
-            return new Promise(r => setTimeout(r, ms));
         }
 
         function log(msg, type='info') {
@@ -969,16 +854,12 @@
             const total = currentResults.length;
             const sumPc = currentResults.reduce((s,r) => s + Math.max(0, r.pc || 0), 0);
             const sumMobile = currentResults.reduce((s,r) => s + Math.max(0, r.mobile || 0), 0);
-            const acCount = currentResults.filter(r => r.source === 'autocomplete' || r.source === 'both').length;
-            const relCount = currentResults.filter(r => r.source === 'related' || r.source === 'both').length;
 
             document.getElementById('resultsTitle').textContent = `📊 "${lastQueryKeyword}" 조회 결과`;
             document.getElementById('statsGrid').innerHTML = `
                 <div class="stat-card"><div class="stat-number">${total.toLocaleString()}</div><div class="stat-label">총 키워드</div></div>
                 <div class="stat-card"><div class="stat-number">${sumPc.toLocaleString()}</div><div class="stat-label">월 PC 검색량 합계</div></div>
                 <div class="stat-card"><div class="stat-number">${sumMobile.toLocaleString()}</div><div class="stat-label">월 모바일 검색량 합계</div></div>
-                <div class="stat-card"><div class="stat-number">${acCount.toLocaleString()}</div><div class="stat-label">자동완성 출처</div></div>
-                <div class="stat-card"><div class="stat-number">${relCount.toLocaleString()}</div><div class="stat-label">연관키워드 출처</div></div>
             `;
 
             sortResults();
@@ -993,7 +874,6 @@
                     <td class="num"><b>${fmtQty(totalQty(r))}</b></td>
                     <td>${compBadge(r.comp)}</td>
                     <td class="num">${r.avgDepth !== null ? r.avgDepth : '-'}</td>
-                    <td>${sourceBadge(r.source)}</td>
                 </tr>
             `).join('');
 
@@ -1037,9 +917,6 @@
                         const order = {'높음':3,'중간':2,'낮음':1,'-':0};
                         va = order[a.comp]||0; vb = order[b.comp]||0; break;
                     case 'avgDepth': va = a.avgDepth ?? -1; vb = b.avgDepth ?? -1; break;
-                    case 'source':
-                        const sOrder = {'both':3,'related':2,'autocomplete':1};
-                        va = sOrder[a.source]||0; vb = sOrder[b.source]||0; break;
                     default: return 0;
                 }
                 return (va - vb) * dir;
@@ -1054,7 +931,7 @@
             }
             const wb = XLSX.utils.book_new();
             const wsData = [
-                ['순위', '키워드', '월간PC검색량', '월간모바일검색량', '월간합계', '경쟁정도', '월평균노출광고수', '출처']
+                ['순위', '키워드', '월간PC검색량', '월간모바일검색량', '월간합계', '경쟁정도', '월평균노출광고수']
             ];
             currentResults.forEach((r, i) => {
                 wsData.push([
@@ -1070,13 +947,12 @@
                     })(),
                     r.comp,
                     r.avgDepth ?? '',
-                    r.source === 'autocomplete' ? '자동완성' : r.source === 'related' ? '연관' : '둘다',
                 ]);
             });
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             ws['!cols'] = [
                 { wch: 6 }, { wch: 30 }, { wch: 14 }, { wch: 16 },
-                { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 10 }
+                { wch: 12 }, { wch: 10 }, { wch: 14 }
             ];
             XLSX.utils.book_append_sheet(wb, ws, "키워드조회");
             const safeKw = lastQueryKeyword.replace(/[\\/:*?"<>|]/g, '_');
