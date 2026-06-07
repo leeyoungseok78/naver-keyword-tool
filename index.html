@@ -835,8 +835,8 @@
                 return;
             }
 
-            // 줄바꿈/콤마로 분리 → 최대 5개
-            let keywords = rawInput.split(/[\r\n,]+/).map(k => k.trim()).filter(Boolean);
+            // 줄바꿈/콤마로 분리 → 내부 공백 제거(네이버 API는 hintKeywords에 공백 불가) → 최대 5개
+            let keywords = rawInput.split(/[\r\n,]+/).map(k => k.replace(/\s+/g, '')).filter(Boolean);
             if (keywords.length > 5) {
                 alert('키워드는 최대 5개까지 입력 가능합니다.\n처음 5개만 조회합니다.');
                 keywords = keywords.slice(0, 5);
